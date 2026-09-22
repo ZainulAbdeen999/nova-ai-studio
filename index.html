@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>NOVA AI Studio</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+  <!-- ======== top header ======== -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">N<span></span></div>
+      <div>
+        <div class="brand-name">NOVA AI Studio</div>
+        <div class="brand-sub">Personal AI — chat · images · voice · video</div>
+      </div>
+    </div>
+    <span class="status-pill" data-mode="boot" id="statusPill">
+      <span class="dot"></span><span id="statusTxt">STARTING…</span>
+    </span>
+  </header>
+
+  <!-- ======== Chat tab ======== -->
+  <section class="tab" id="tab-chat">
+    <div class="chat-head">
+      <div class="chat-title">AI Assistant</div>
+      <div class="chat-sub" id="chatSub">online AI — free, no key</div>
+    </div>
+    <div class="chat-log" id="chatLog"></div>
+    <div class="chips" id="chips"></div>
+    <form class="chat-in" id="chatForm">
+      <input id="chatInput" autocomplete="off" placeholder="Kuch bhi likhiye…">
+      <button class="send-btn" type="submit" title="Send">➤</button>
+    </form>
+  </section>
+
+  <!-- ======== Images tab ======== -->
+  <section class="tab hidden" id="tab-images">
+    <div class="card">
+      <p class="card-title">AI Image Generator <span class="hint">free · flux · no key</span></p>
+      <label class="lbl">Prompt — kya banayein?</label>
+      <textarea id="imgPrompt" rows="3" placeholder="e.g. sunset over mountains, cinematic, ultra detailed"></textarea>
+      <div class="row">
+        <div class="chipset" id="imgSize">
+          <button data-size="384x384" class="chip active">Square</button>
+          <button data-size="768x512" class="chip">Wide</button>
+          <button data-size="512x768" class="chip">Poster</button>
+        </div>
+        <button class="btn-main" id="imgGen">✨ AI banao</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="chipset" id="imgMode">
+          <button data-mode="auto" class="chip active">⚡ Instant preview + AI</button>
+          <button data-mode="instant" class="chip">⚡ Sirf instant (offline)</button>
+        </div>
+      </div>
+      <div class="img-result hidden" id="imgResult">
+        <div class="img-wrap"><img id="imgOut" alt="AI image"><div class="img-loader" id="imgLoader">AI banane laga hai…</div></div>
+        <div class="img-src" id="imgSrcLabel"></div>
+        <div class="row">
+          <button class="btn" id="imgVariation">🎲 Variation</button>
+          <button class="btn btn-green" id="imgDownload">⬇ Download</button>
+        </div>
+      </div>
+      <p class="lbl" style="margin-top:14px">History <span class="hint" id="imgHistCount"></span></p>
+      <div class="hist" id="imgHist"></div>
+    </div>
+  </section>
+
+  <!-- ======== Voice tab ======== -->
+  <section class="tab hidden" id="tab-voice">
+    <div class="card">
+      <p class="card-title">Text → Voice <span class="hint">har zuban mein bole</span></p>
+      <div class="row">
+        <select class="input" id="ttsLang">
+          <option value="ur">Urdu</option>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="ar">Arabic</option>
+          <option value="fr">French</option>
+        </select>
+        <select class="input" id="ttsSpeed">
+          <option value="0.9">Slow</option>
+          <option value="1" selected>Normal</option>
+          <option value="1.1">Fast</option>
+        </select>
+      </div>
+      <textarea id="ttsText" rows="3" placeholder="Jo bolna hai yahan likhiye…"></textarea>
+      <div class="row">
+        <button class="btn-main" id="ttsPlay">▶ Play</button>
+        <button class="btn btn-green" id="ttsRec">🎙 Save as file</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Voice → Text <span class="hint">mic se sunkar likhegi</span></p>
+      <div class="row">
+        <select class="input" id="sttLang">
+          <option value="ur-PK">Urdu</option>
+          <option value="en-US">English</option>
+        </select>
+        <button class="btn-main" id="sttBtn" title="bolna shuru karein">🎤 Bolna shuru karein</button>
+      </div>
+      <div class="stt-box" id="sttBox">Mic dabayein aur boliye…</div>
+      <div class="row">
+        <button class="btn" id="sttCopy">📋 Copy</button>
+        <button class="btn btn-green" id="sttSend">➤ Chat mein bhejein</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">🎵 Lo-fi Chill <span class="hint">brain-relaxing beats, offline</span></p>
+      <p style="color:var(--mut);font-size:13px;line-height:1.5">Kaam karte huve relax karein — padhein, likhein, AI use karein. Bas dabaiye aur suniye.</p>
+      <div class="row">
+        <button class="btn-main" id="lofiBtn">▶ Lo-fi chalu karein</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== Video tab ======== -->
+  <section class="tab hidden" id="tab-video">
+    <div class="segbar" id="videoMode">
+      <button data-mode="aimotion" class="seg active">AI Image-Motion</button>
+      <button data-mode="textvideo" class="seg">Text Video</button>
+    </div>
+
+    <div class="card" id="aimotionCard">
+      <p class="card-title">AI Video <span class="hint">AI images + movement + aapki awaaz</span></p>
+      <label class="lbl">Scene prompt</label>
+      <textarea id="vidPrompt" rows="2" placeholder="e.g. futuristic city, neon lights, cinematic">futuristic city, neon lights, cinematic</textarea>
+      <div class="chipset" id="vidFrames">
+        <button data-n="2" class="chip active">2 scenes</button>
+        <button data-n="3" class="chip">3 scenes</button>
+        <button data-n="4" class="chip">4 scenes</button>
+      </div>
+      <label class="lbl">Narration (optional) — awaz video mein</label>
+      <textarea id="vidNarration" rows="2" placeholder="Jo video mein bolni hai (reh jaye khali toh sirf images)"></textarea>
+      <div class="row">
+        <span class="lbl" style="margin:0">Scene time: <b id="vidDurTxt">3s</b></span>
+        <input type="range" id="vidDur" min="2" max="6" value="3" style="flex:1">
+      </div>
+      <button class="btn-main" id="vidGen">🎬 Generate video</button>
+      <div class="vid-result hidden" id="vidResult">
+        <video id="vidOut" controls playsinline muted></video>
+        <div class="row">
+          <button class="btn btn-green" id="vidDownload">⬇ Download video</button>
+          <button class="btn" id="vidReroll">🎲 Scene variation</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="textvideoCard">
+      <p class="card-title">Text Video <span class="hint">likhi hui baat = video</span></p>
+      <label class="lbl">Lines — har line ek khayal</label>
+      <textarea id="txtLines" rows="4" placeholder="Paigham umeed ka&#10;Har subah nayi shuruaat hai">Paigham umeed ka
+Har subah nayi shuruaat hai</textarea>
+      <div class="row">
+        <input type="color" id="txtBg" value="#0f1423">
+        <button class="btn-main" id="txtGen">🎬 Text video banao</button>
+      </div>
+      <div class="vid-result hidden" id="txtResult">
+        <video id="txtOut" controls playsinline muted></video>
+        <button class="btn btn-green" id="txtDownload">⬇ Download video</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== Tools tab ======== -->
+  <section class="tab hidden" id="tab-tools">
+    <div class="card">
+      <p class="card-title">📝 To-do — aaj ka kaam</p>
+      <form class="row" id="todoForm">
+        <input class="input" id="todoInput" placeholder="aaj kya karna hai?">
+        <button class="btn-main" type="submit">Add</button>
+      </form>
+      <div class="list" id="todoList"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">📒 Notes — apni baatein</p>
+      <form class="row" id="noteForm">
+        <input class="input" id="noteInput" placeholder="note likhiye…">
+        <button class="btn-main" type="submit">Save</button>
+      </form>
+      <div class="list" id="noteList"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">💌 Quote Card <span class="hint">1 second mein ready, offline</span></p>
+      <input class="input" id="quoteText" placeholder="Woh baat jo aapki hai…" value="Koshish karne walon ki kabhi haar nahi hoti">
+      <div class="row">
+        <button class="btn-main" id="quoteGen">🎨 Card banao</button>
+        <button class="btn btn-green" id="quoteDown">⬇ Download PNG</button>
+      </div>
+      <canvas id="quoteOut" width="900" height="900" style="display:none;margin-top:12px;width:100%;border-radius:14px"></canvas>
+    </div>
+  </section>
+</div>
+
+<footer class="nav">
+  <button class="navbtn active" data-tab="chat"><span>💬</span>Chat</button>
+  <button class="navbtn" data-tab="images"><span>🖼</span>Images</button>
+  <button class="navbtn" data-tab="voice"><span>🎙</span>Voice</button>
+  <button class="navbtn" data-tab="video"><span>🎬</span>Video</button>
+  <button class="navbtn" data-tab="tools"><span>💼</span>Tools</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script src="js/markdown.js"></script>
+<script src="js/services.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
