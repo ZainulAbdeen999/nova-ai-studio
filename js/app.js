@@ -374,6 +374,7 @@ window.VIDEO = {
 
 function chooseMode(mode) {
   $("aimotionCard").classList.toggle("hidden", mode !== "aimotion");
+  $("photofilmCard").classList.toggle("hidden", mode !== "photofilm");
   $("textvideoCard").classList.toggle("hidden", mode !== "textvideo");
   document.querySelectorAll("#videoMode .seg").forEach((s) =>
     s.classList.toggle("active", s.dataset.mode === mode));
@@ -716,6 +717,307 @@ $("quoteDown").addEventListener("click", () => {
   Services.downloadUrl(cv.toDataURL("image/png"), "nova-card-" + Date.now() + ".png");
 });
 
+/* ================= photo studio ================= */
+const PS = { img: null, w: 0, h: 0, filter: "natural", angle: 0, fliph: false, mode: "filter" };
+
+const FILTERS = {
+  natural: "none",
+  vivid: "saturate(1.45) contrast(1.12) brightness(1.06)",
+  vintage: "sepia(.5) contrast(.95) brightness(1.05) saturate(.9)",
+  mono: "grayscale(1) contrast(1.06)",
+  noir: "grayscale(1) contrast(1.4) brightness(.85)",
+  warm: "sepia(.35) saturate(1.35) hue-rotate(-8deg)",
+  cool: "saturate(1.15) hue-rotate(12deg)",
+  neon: "saturate(2.1) contrast(1.25) hue-rotate(-18deg)",
+  soft: "blur(.6px) brightness(1.12) saturate(1.06)"
+};
+
+function psRender() {
+  const cv = $("editCv");
+  const ctx = cv.getContext("2d");
+  const refCW = refCH() || 480;
+  $("editEmpty").classList.add("hidden");
+  if (!PS.img) { return; }
+  if (PS.angle % 180 === 90) {
+    const tmp = cv.width; cv.width = cv.height; cv.height = tmp;
+  } else {
+    if (cv.width !== 720) cv.width = 720;
+    if (cv.height !== 480) cv.height = 480;
+  }
+  const W = cv.width, H = cv.height;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate((PS.angle * Math.PI) / 180);
+  ctx.scale(PS.fliph ? -1 : 1, 1);
+  const s = Math.max(W / PS.w, H / PS.h);
+  const dw = PS.w * s, dh = PS.h * s;
+  ctx.filter = FILTERS[PS.filter] || "none";
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(PS.img, -dw / 2, -dh / 2, dw, dh);
+  ctx.filter = "none";
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const t = $("editText").value.trim();
+  if (t) {
+    ctx.fillStyle = "rgba(0,0,0,.38)";
+    ctx.fillRect(0, H - 92, W, 92);
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 " + $("editTextSize").value + "px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(t, W / 2, H - 46);
+  }
+}
+
+function refCH() {
+  const cv = $("editCv");
+  return 480;
+}
+
+function psLoadImageFromUrl(url) {
+  $("editLoader").classList.remove("hidden");
+  const im = new Image();
+  im.onload = () => {
+    PS.img = im; PS.w = im.naturalWidth; PS.h = im.naturalHeight;
+    PS.filter = "natural"; PS.angle = 0; PS.fliph = false;
+    clearChips("#filterChips");
+    $("editCv").width = 720; $("editCv").height = 480;
+    psRender();
+    $("editLoader").classList.add("hidden");
+    Services.chime(true);
+  };
+  im.onerror = () => { $("editLoader").classList.add("hidden"); toast("Photo load nahi hui"); };
+  im.crossOrigin = "anonymous";
+  im.src = url;
+}
+
+function clearChips(sel) {
+  document.querySelectorAll(sel + " .chip").forEach((c) => c.classList.remove("active"));
+}
+
+$("editUpload").addEventListener("click", () => $("editFile").click());
+$("editFile").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => psLoadImageFromUrl(rd.result);
+  rd.readAsDataURL(f);
+});
+$("editUseLast").addEventListener("click", () => {
+  const src = $("imgOut").src;
+  if (src && (src.indexOf("data:") === 0 || src.indexOf("blob:") === 0)) { psLoadImageFromUrl(src); return; }
+  if (imgHist.length && imgHist[0].url) { psLoadImageFromUrl(imgHist[0].url); return; }
+  toast("Pehle AI image banao (Images tab)");
+});
+document.querySelectorAll("#filterChips .chip").forEach((c) =>
+  c.addEventListener("click", () => {
+    clearChips("#filterChips");
+    c.classList.add("active");
+    PS.filter = c.dataset.f;
+    psRender();
+    Services.chime();
+  }));
+$("rotL").addEventListener("click", () => { PS.angle = (PS.angle - 90) % 360; psRender(); Services.chime(); });
+$("rotR").addEventListener("click", () => { PS.angle = (PS.angle + 90) % 360; psRender(); Services.chime(); });
+$("flipH").addEventListener("click", () => { PS.fliph = !PS.fliph; psRender(); Services.chime(); });
+$("editText").addEventListener("input", psRender);
+$("editTextSize").addEventListener("change", psRender);
+$("editTextType").addEventListener("click", () => {
+  const t = $("editText").value.trim();
+  if (!t) { $("editText").value = "Tera sath, teri yaad 🤍"; psRender(); }
+  Services.chime();
+});
+$("editDown").addEventListener("click", () => {
+  const cv = $("editCv");
+  if (!PS.img) { toast("Pehle photo load karein"); return; }
+  Services.downloadUrl(cv.toDataURL("image/png"), "nova-edit-" + Date.now() + ".png");
+});
+document.querySelectorAll("#editMode .chip").forEach((c) =>
+  c.addEventListener("click", () => {
+    document.querySelectorAll("#editMode .chip").forEach((x) => x.classList.remove("active"));
+    c.classList.add("active");
+    PS.mode = c.dataset.mode;
+    if (PS.mode === "enhance") adoptAiEnhance();
+    Services.chime();
+  }));
+
+async function adoptAiEnhance() {
+  if (!PS.img) { toast("Pehle photo load karein"); return; }
+  const cv = $("editCv");
+  const W = PS.w, H = PS.h;
+  const big = document.createElement("canvas");
+  big.width = W * 2; big.height = H * 2;
+  const bc = big.getContext("2d");
+  bc.imageSmoothingQuality = "high";
+  bc.filter = "contrast(1.08) saturate(1.08) brightness(1.02)";
+  bc.drawImage(PS.img, 0, 0, W * 2, H * 2);
+  const out = document.createElement("canvas");
+  out.width = W; out.height = H;
+  const oc = out.getContext("2d");
+  oc.imageSmoothingQuality = "high";
+  oc.filter = "contrast(1.06)";
+  oc.drawImage(big, 0, 0, W * 2, H * 2, 0, 0, W, H);
+  PS.img = out;
+  PS.w = W; PS.h = H;
+  psRender();
+  toast("✨ AI Enhance — upscale + contrast OK");
+  Services.chime(true);
+}
+
+/* ================= photo movie ================= */
+let filmPhotos = [];
+document.querySelectorAll("#filmStrip");
+$("filmAdd").addEventListener("click", () => $("filmFile").click());
+$("filmFile").addEventListener("change", (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  files.forEach((f) => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        filmPhotos.push(im);
+        renderFilmStrip();
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+});
+function renderFilmStrip() {
+  const box = $("filmStrip");
+  $("filmCount").textContent = filmPhotos.length + " photos";
+  box.innerHTML = "";
+  filmPhotos.forEach((im, i) => {
+    const th = document.createElement("div");
+    th.className = "hist-thumb";
+    th.innerHTML = "<img src='" + im.src + "'>";
+    th.onclick = () => { filmPhotos.splice(i, 1); renderFilmStrip(); };
+    th.title = "hataayein";
+    box.appendChild(th);
+  });
+}
+
+function startMusicLoop(ctx, dest, stepMs) {
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(dest);
+  let step = 0;
+  const chords = [130.8, 220, 261.6, 174.6, 196, 261.6, 164.8, 220];
+  const tick = () => {
+    const t = ctx.currentTime;
+    for (let k = 0; k < 3; k++) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = k === 1 ? "triangle" : "sine";
+      o.frequency.value = chords[(step * 2 + k) % chords.length];
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(k === 2 ? 0.05 : 0.1, t + 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + stepMs / 1000 + 0.2);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + stepMs / 1000 + 0.4);
+    }
+    step = (step + 1) % 4;
+  };
+  tick();
+  const timer = setInterval(tick, stepMs);
+  return () => clearInterval(timer);
+}
+
+$("filmGen").addEventListener("click", async () => {
+  if (!filmPhotos.length) { toast("Pehle photos choose karein"); return; }
+  const narration = $("filmNarration").value.trim();
+  const wantMusic = $("filmMusic").checked;
+  const useNarr = narration && await Services.proxyLive ? true : false;
+  if (narration && !useNarr) toast("Narration local server par hi hoti hai — public link par music + photos video banegi");
+
+  const btn = $("filmGen");
+  btn.disabled = true;
+  btn.textContent = "🎬 movie bana raha…";
+  const W = 768, H = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  const stream = canvas.captureStream(30);
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const dest = audioCtx.createMediaStreamDestination();
+  let stopMusic = null;
+  let audioEl = null;
+  let narrDur = 0;
+  if (useNarr) {
+    audioEl = new Audio(await Services.ttsUrlFor(narration, "ur", 1));
+    try {
+      await new Promise((res, rej) => {
+        audioEl.onloadedmetadata = res;
+        audioEl.onerror = rej;
+        audioEl.load();
+      });
+      narrDur = audioEl.duration || 0;
+      const src = audioCtx.createMediaElementSource(audioEl);
+      src.connect(dest);
+      src.connect(audioCtx.destination);
+    } catch (e) { audioEl = null; }
+  }
+  if (wantMusic) stopMusic = startMusicLoop(audioCtx, dest, 2500);
+  stream.addTrack(dest.stream.getAudioTracks()[0]);
+
+  const per = 3.2;
+  const total = Math.max(useNarr ? narrDur + 1 : 0, filmPhotos.length * per) + 1;
+  const rec = new MediaRecorder(stream, { mimeType: Services.mimeType("video") });
+  const chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  if (_vidRaf) cancelAnimationFrame(_vidRaf);
+  try {
+    const blob = await new Promise((resolve, reject) => {
+      rec.onstop = () => resolve(new Blob(chunks, { type: rec.mimeType || "video/webm" }));
+      rec.onerror = () => reject(new Error("rec failed"));
+      rec.start(120);
+      if (audioEl) audioEl.play().catch(() => {});
+      const timeRef = Date.now();
+      const draw = () => {
+        const t = (Date.now() - timeRef) / 1000;
+        if (t >= total) { rec.stop(); if (stopMusic) stopMusic(); audioCtx.close().catch(() => {}); return; }
+        const n = filmPhotos.length;
+        const i = Math.min(Math.floor(t / per), n - 1);
+        const p = (t - i * per) / per;
+        const img = filmPhotos[i];
+        const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+        const dw = img.naturalWidth * s + 6, dh = img.naturalHeight * s + 6;
+        const z = 1 + 0.1 * p;
+        const px = (t) => Math.sin((t / per) * Math.PI) * 22;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, (W - dw * z) / 2 + px(t), (H - dh * z) / 2, dw * z, dh * z);
+        const tr = 0.8;
+        if (i < n - 1 && p > 1 - tr / per) {
+          const a = (p - (1 - tr / per)) / (tr / per);
+          const nxt = filmPhotos[i + 1];
+          const nz = 1.05;
+          ctx.globalAlpha = Math.min(1, a);
+          ctx.drawImage(nxt, (W - nxt.naturalWidth * s * nz) / 2, (H - nxt.naturalHeight * s * nz) / 2, nxt.naturalWidth * s * nz, nxt.naturalHeight * s * nz);
+          ctx.globalAlpha = 1;
+        }
+        _vidRaf = requestAnimationFrame(draw);
+      };
+      draw();
+    });
+    $("filmOut").src = URL.createObjectURL(blob);
+    $("filmResult").classList.remove("hidden");
+    window._lastFilm = { blob, name: "nova-film-" + Date.now() + ".webm" };
+    toast("Movie ban gayi ✓ (photos: " + filmPhotos.length + (wantMusic ? " + lofi" : "") + (useNarr ? " + narration" : "") + ")");
+    Services.chime(true);
+  } catch (e) {
+    toast("Movie record nahi hui — Chrome use karein");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🎬 Movie banao";
+  }
+});
+$("filmDownload").addEventListener("click", () => {
+  if (window._lastFilm) Services.download(window._lastFilm.blob, window._lastFilm.name);
+});
+
 /* ================= boot ================= */
 function boot() {
   $("chatSub").textContent = botName !== "Bhai" ? "Ahista se " + botName + " ka AI" : "online AI — free, no key";
@@ -753,6 +1055,19 @@ async function runSelfTest() {
     await note("IMG " + s.kind + " " + s.ms + "s " + (box.dataset.px || "no-px"));
   } catch (e) {
     await note("IMGF " + (e && e.message));
+  }
+  try {
+    const im = new Image();
+    im.src = Services.instantArt("test pic", 128, 128);
+    await new Promise((res) => { im.onload = res; im.onerror = res; });
+    PS.img = im; PS.w = im.naturalWidth || 128; PS.h = im.naturalHeight || 128;
+    PS.filter = "vivid";
+    $("editCv").width = 200; $("editCv").height = 150;
+    psRender();
+    const data = $("editCv").getContext("2d").getImageData(0, 0, 200, 150).data;
+    await note("EDIT ok 200x150 px=" + data.length);
+  } catch (e) {
+    await note("EDITF " + e.message);
   }
   try {
     const sp = await Services.speakNative ? "ok" : "ok";
