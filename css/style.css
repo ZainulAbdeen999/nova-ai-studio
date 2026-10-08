@@ -104,6 +104,16 @@ select.input{appearance:none;flex:1}
   border-radius:12px;padding:12px;line-height:1.55;margin-top:12px;font-size:14px}
 .stt-box.live{border-color:var(--bad);color:var(--txt)}
 
+/* ---------- photo studio ---------- */
+.edit-stage{position:relative;margin-top:12px;background:#000;border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;display:grid;place-items:center;min-height:220px}
+.edit-stage canvas{width:100%;display:block;max-height:52vh}
+.edit-empty{position:absolute;color:var(--dim);font-size:13px;text-align:center;padding:14px}
+.edit-loader{position:absolute;inset:0;display:grid;place-items:center;background:rgba(11,14,26,.72);
+  color:var(--acc2);font-weight:800;letter-spacing:.5px}
+.edit-panel{margin-top:12px}
+#editTextType{background:var(--gd);border:none;color:#fff}
+
 /* ---------- video ---------- */
 .segbar{display:flex;gap:6px;background:var(--bg2);padding:5px;border-radius:13px;border:1px solid var(--line);margin-bottom:14px}
 .seg{flex:1;border:none;background:transparent;color:var(--mut);font-weight:700;font-size:13px;
