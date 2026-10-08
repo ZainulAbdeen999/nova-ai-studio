@@ -119,10 +119,63 @@
     </div>
   </section>
 
+  <!-- ======== Edit tab (Photo Studio) ======== -->
+  <section class="tab hidden" id="tab-edit">
+    <div class="card">
+      <p class="card-title">🖌 Photo Studio <span class="hint">AI se photo edit — sab free</span></p>
+      <div class="row">
+        <button class="btn" id="editUpload">📁 Photo upload karein</button>
+        <input type="file" id="editFile" accept="image/*" hidden>
+        <button class="btn" id="editUseLast">✨ Pichli AI image</button>
+        <button class="btn btn-green" id="editDown">⬇ Download PNG</button>
+      </div>
+      <div class="edit-stage">
+        <canvas id="editCv" width="720" height="480"></canvas>
+        <div class="edit-empty" id="editEmpty">Upar se photo upload karein ya AI image chuniye</div>
+        <div class="edit-loader hidden" id="editLoader">AI soch raha…</div>
+      </div>
+      <div class="chipset" id="editMode" style="margin-top:12px">
+        <button data-mode="filter" class="chip active">🎭 Filters</button>
+        <button data-mode="enhance" class="chip">✨ AI Enhance</button>
+        <button data-mode="text" class="chip">🅰 Text Poster</button>
+      </div>
+      <div id="editPanel" class="edit-panel">
+        <div class="chipset" id="filterChips">
+          <button data-f="natural" class="chip active">Original</button>
+          <button data-f="vivid" class="chip">Vivid</button>
+          <button data-f="vintage" class="chip">Vintage</button>
+          <button data-f="mono" class="chip">B&amp;W</button>
+          <button data-f="noir" class="chip">Noir</button>
+          <button data-f="warm" class="chip">Sunset</button>
+          <button data-f="cool" class="chip">Cool</button>
+          <button data-f="neon" class="chip">Neon</button>
+          <button data-f="soft" class="chip">Glow</button>
+        </div>
+        <div class="row">
+          <span class="lbl" style="margin:0">Rotate / Flip</span>
+          <button class="btn" id="rotL">↺</button>
+          <button class="btn" id="rotR">↻</button>
+          <button class="btn" id="flipH">⇋</button>
+        </div>
+        <div class="row" style="align-items:center">
+          <span class="lbl" style="margin:0">Text:</span>
+          <input class="input" id="editText" placeholder="Poster par likhi baat…" style="flex:1">
+          <select class="input" id="editTextSize" style="flex:0 0 86px">
+            <option value="28">Small</option>
+            <option value="44" selected>Normal</option>
+            <option value="64">Big</option>
+          </select>
+          <button class="btn" id="editTextType">Keh do</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ======== Video tab ======== -->
   <section class="tab hidden" id="tab-video">
     <div class="segbar" id="videoMode">
       <button data-mode="aimotion" class="seg active">AI Image-Motion</button>
+      <button data-mode="photofilm" class="seg">Photo Movie</button>
       <button data-mode="textvideo" class="seg">Text Video</button>
     </div>
 
@@ -148,6 +201,27 @@
           <button class="btn btn-green" id="vidDownload">⬇ Download video</button>
           <button class="btn" id="vidReroll">🎲 Scene variation</button>
         </div>
+      </div>
+    </div>
+
+    <div class="card" id="photofilmCard" style="display:none">
+      <p class="card-title">Photo Movie <span class="hint">apni photos = youtube-ready video</span></p>
+      <div class="row">
+        <button class="btn" id="filmAdd">📁 Photos chuniye</button>
+        <input type="file" id="filmFile" accept="image/*" multiple hidden>
+        <span class="hint" id="filmCount">0 photos</span>
+      </div>
+      <div class="hist" id="filmStrip"></div>
+      <label class="lbl">Narration (optional)</label>
+      <textarea id="filmNarration" rows="2" placeholder="Video mein sunai dene wali baat…"></textarea>
+      <div class="row">
+        <label class="lbl" style="margin:0">🎵 Lo-fi music video mein</label>
+        <input type="checkbox" id="filmMusic" checked>
+        <button class="btn-main" id="filmGen">🎬 Movie banao</button>
+      </div>
+      <div class="vid-result hidden" id="filmResult">
+        <video id="filmOut" controls playsinline muted></video>
+        <button class="btn btn-green" id="filmDownload">⬇ Download video</button>
       </div>
     </div>
 
@@ -200,6 +274,7 @@ Har subah nayi shuruaat hai</textarea>
 <footer class="nav">
   <button class="navbtn active" data-tab="chat"><span>💬</span>Chat</button>
   <button class="navbtn" data-tab="images"><span>🖼</span>Images</button>
+  <button class="navbtn" data-tab="edit"><span>🖌</span>Edit</button>
   <button class="navbtn" data-tab="voice"><span>🎙</span>Voice</button>
   <button class="navbtn" data-tab="video"><span>🎬</span>Video</button>
   <button class="navbtn" data-tab="tools"><span>💼</span>Tools</button>
