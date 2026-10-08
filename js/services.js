@@ -483,7 +483,7 @@ const Services = (() => {
     a.remove();
   }
 
-  return { probeOnline, served, chat, imageUrl, fetchImage, loadImage, buildSceneSrc, hashSeed,
+  return { probeOnline, served, proxyLive, chat, imageUrl, fetchImage, loadImage, buildSceneSrc, hashSeed,
     instantArt, lofi, chime, ttsUrlFor, playTts, speakNative, recordAudio, mimeType,
     makeRecognition, download, downloadUrl };
 })();
