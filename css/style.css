@@ -104,6 +104,11 @@ select.input{appearance:none;flex:1}
   border-radius:12px;padding:12px;line-height:1.55;margin-top:12px;font-size:14px}
 .stt-box.live{border-color:var(--bad);color:var(--txt)}
 
+/* ---------- open-source models banner ---------- */
+.open-src{font-size:11px;color:var(--dim);background:rgba(52,211,153,.06);
+  border-bottom:1px solid var(--line);padding:6px 14px;text-align:center}
+.open-src b{color:var(--acc2)}
+
 /* ---------- photo studio ---------- */
 .edit-stage{position:relative;margin-top:12px;background:#000;border:1px solid var(--line);
   border-radius:14px;overflow:hidden;display:grid;place-items:center;min-height:220px}
