@@ -114,23 +114,29 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._send(400, b'{"error":"bad json"}')
             return
         messages = body.get("messages") or [{"role": "user", "content": "hi"}]
-        payload = {"model": body.get("model", "openai"), "messages": messages, "temperature": 0.7}
-        try:
-            req = urllib.request.Request(CHAT_URL, data=json.dumps(payload).encode(),
-                                         headers={"Content-Type": "application/json"}, method="POST")
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                raw = resp.read()
-            out = ""
+        payload = {"model": body.get("model", "openai"), "messages": messages,
+                   "temperature": body.get("temperature", 0.7)}
+        if body.get("tools"):
+            payload["tools"] = body["tools"]
+            payload["tool_choice"] = body.get("tool_choice", "auto")
+        if body.get("private"):
+            payload["private"] = body["private"]
+        for attempt in range(2):
             try:
+                req = urllib.request.Request(CHAT_URL, data=json.dumps(payload).encode(),
+                                             headers={"Content-Type": "application/json"}, method="POST")
+                with urllib.request.urlopen(req, timeout=130) as resp:
+                    raw = resp.read()
                 d = json.loads(raw)
-                out = ((d.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+                msg = ((d.get("choices") or [{}])[0].get("message")) or {}
+                out = {"content": msg.get("content") or "", "tool_calls": msg.get("tool_calls") or []}
+                if msg.get("reasoning_content"):
+                    out["reasoning_content"] = msg.get("reasoning_content")
+                if out["content"].strip() or out["tool_calls"]:
+                    self._send(200, json.dumps({"choices": [{"message": out}]}).encode())
+                    return
             except Exception:
-                out = raw.decode("utf-8", "replace")
-            if out.strip():
-                self._send(200, json.dumps({"choices": [{"message": {"content": out.strip()}}]}).encode())
-                return
-        except Exception:
-            pass
+                time.sleep(0.6 * (attempt + 1))
         self._send(502, b'{"choices":[{"message":{"content":""}}]}')
 
     def handle_tts(self, parsed):
