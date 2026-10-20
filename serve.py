@@ -6,6 +6,7 @@ import socket
 import socketserver
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -125,8 +126,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             try:
                 req = urllib.request.Request(CHAT_URL, data=json.dumps(payload).encode(),
                                              headers={"Content-Type": "application/json"}, method="POST")
-                with urllib.request.urlopen(req, timeout=130) as resp:
-                    raw = resp.read()
+                try:
+                    with urllib.request.urlopen(req, timeout=130) as resp:
+                        raw = resp.read()
+                except urllib.error.HTTPError as he:
+                    body_bytes = he.read()
+                    if he.code in (402, 429):
+                        self._send(he.code, body_bytes or json.dumps({"error": "rate limit"}).encode())
+                        return
+                    time.sleep(0.6 * (attempt + 1))
+                    continue
                 d = json.loads(raw)
                 msg = ((d.get("choices") or [{}])[0].get("message")) or {}
                 out = {"content": msg.get("content") or "", "tool_calls": msg.get("tool_calls") or []}
